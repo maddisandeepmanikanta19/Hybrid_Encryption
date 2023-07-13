@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Hybrid Encryption</title>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			background-color: #F5F5F5;
+		}
+		h1 {
+			text-align: center;
+			margin-top: 50px;
+		}
+		form {
+			margin: 50px auto;
+			background-color: #FFFFFF;
+			padding: 20px;
+			box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.5);
+		}
+		label {
+			display: block;
+			margin-bottom: 10px;
+			font-weight: bold;
+		}
+		button:hover {
+			background-color: #3E8E41;
+		}
+	</style>
+</head>
+<body class="">
+	<h1>Hybrid Encryption</h1>
+	
+    <form class="col-lg-8 col-md-10 col-12" id="cipher-generator" method="POST">
+
+        <div class="form-row">
+            <div class="input-group mb-3 mr-sm-2">
+				<div class="col-sm-2 input-group-prepend">
+					<div class="input-group-text fw-light justify-content-center ">Text</div>
+				</div> 
+                <input type="text" class="font-monoscope  form-control" id="text" placeholder="Text">
+                <input id="clear-form" type="reset" class="w-10 bg-light form-control" value="Clear Form">
+            </div>
+        </div>
+    
+		<div class="form-row">
+			<div class="input-group mb-3 mr-sm-2">
+				<div class="col-sm-2 input-group-prepend">
+					<div class="input-group-text justify-content-center">Action</div>
+				</div> 
+				<select class="col-sm-4 form-control" name="action" id="action">
+					<option value="encrypt">Encrypt</option>
+					<option value="decrypt">Decrypt</option>
+				</select>
+
+				<div class="col-6 input-group-prepend d-flex flex-inline ">
+					<div class="input-group-text col-6 justify-content-center">no of actions</div>
+					<input type="number" class="form-control" id="n" value="1">
+				</div>
+			</div>
+		</div>
+		
+		<div id="algos">
+		</div>
+
+        <div class="form-row">
+			<div class="input-group mb-3 mr-sm-2">
+				<div class="col-2 input-group-prepend">
+					<div class="input-group-text text-success justify-content-center" id="generator">Generate</div>
+				</div> 
+				<input class="form-control" id="result" type="text" value="">
+			</div>
+		</div>
+
+        
+    </form>
+	
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+  
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js" integrity="sha512-3gJwYpMe3QewGELv8k/BX9vcqhryRdzRMxVfq6ngyWXwo03GFEzjsUm8Q7RZcHPHksttq7/GFoxjCVUjkjvPdw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script>
+
+		$(document).ready(function(){
+			let n = $("#n");
+			let action = $("#action");
+			let algos = $("#algos");
+			let text = $("#text");
+
+			let n_change = () => {
+				console.log(n.val());
+				algos.html("");
+				for(var i = 1; i <= parseInt(n.val()); i++) {
+					algos.append(`
+					<div class="form-row">
+						<div class="input-group mb-3 mr-sm-2">
+							<div class="col-6 input-group-prepend d-flex flex-inline ">
+								<div class="input-group-text col-4 justify-content-center">Algorythm ${i}</div>
+								<select class="form-control " id="algorithm${i}">
+									<option value="caesar">Caesar Cipher</option>
+									<option value="playfair">Playfair</option>
+									<option value="otp">One Time Pad</option>
+									<option value="aes">AES</option>
+									<option value="railfence">Rail Fence</option>
+								</select>
+							</div>
+							<div class="col-6 input-group-prepend d-flex flex-inline">
+								<div class="input-group-text w-50 justify-content-center">Key ${i}</div>
+								<input type="text" class="form-control w-50" id="key${i}">
+							</div>
+						</div>
+					</div>
+					`)
+				}
+			};
+
+			n.on("change", n_change);
+
+			$("#clear-form").on("click", function(e){
+				//e.preventDefault();
+				$("cipher-generator").trigger("reset");
+				$("#result").val("");
+				n_change();
+			});
+
+			$('#generator').on('click', function () {
+
+				$("#result").val("Loading...");
+				var data = {
+					action : $("#action").val(),
+					text   : text.val(),
+					n : n.val()
+				};
+				
+				for(let i = 1; i <= parseInt(n.val()); i++) {
+					data[`algorithm${i}`] = $(`#algorithm${i}`).val();
+					data[`key${i}`] = $(`#key${i}`).val();
+				}
+
+				console.log(data);
+				data = JSON.stringify(data);
+				console.log(data);
+
+				$.ajax({
+					url: '/generate',
+					type: 'POST',
+					data: data,
+					success: function (msg) {
+						//$("#result").val(`${$("#action").val()}ion of ${text.val()} is ${msg}`);
+						$("#result").val(`${msg}`);
+					},
+					failure : function(msg) {
+						$("#result").val(`error ${msg}`);
+					}
+				})
+			});
+
+			
+			n_change();
+			text.focus();
+		});
+	</script>
+</body>
+</html>
